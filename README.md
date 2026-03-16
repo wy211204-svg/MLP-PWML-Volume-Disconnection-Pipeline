@@ -96,7 +96,7 @@ The patient dataset must follow the structure below:
 Run the pipeline from the terminal:
 
 ``` bash
-python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_workspace --controls_t1_dir /path/to/control_t1_images --target_fa /path/to/target_FA.nii.gz --bedpostx_dir /path/to/bedpostx_data --mean_fa /path/to/mean_FA.nii.gz --mat_dir /path/to/transforms_MAT --thr_map /path/to/final_thr_map.nii.gz --jhu_atlas /path/to/JHU_atlas.nii.gz
+python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_workspace controls_FA_to_T1_dir /path/to/controls_FA_to_T1_images --bedpostx_dir /path/to/bedpostx_data --mean_fa /path/to/mean_FA.nii.gz --mat_dir /path/to/transforms_MAT --thr_map /path/to/thr_map.nii.gz --jhu_atlas /path/to/JHU_atlas.nii.gz
 ```
 
 ------------------------------------------------------------------------

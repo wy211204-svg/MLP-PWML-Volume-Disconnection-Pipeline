@@ -29,7 +29,7 @@ class PWMLPipeline:
 
     def _step1_register_t1_to_fa(self, p_info):
         patient_id, patient_t1 = p_info['id'], p_info['t1_pwml']
-        target_fa = self.config['pwml_inputs']['target_fa_file']
+        target_fa = self.config['pwml_inputs']['mean_fa_file']
         fnirt_config_name = "FA_2_FMRIB58_1mm"
 
         reg_dir = os.path.join(self.dirs['pwml_reg'], patient_id)

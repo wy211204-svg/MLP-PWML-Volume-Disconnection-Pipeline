@@ -6,8 +6,8 @@ This pipeline integrates widely used neuroimaging tools including
 **FSL**, **ANTs**, and **SimpleITK** to automate:
 
 -   Image registration
--   Fiber-Specific PWML Volume Quantification
--   Structural disconnection Score analysis
+-   Fiber-specific PWML volume quantification
+-   Structural disconnection score analysis
 
 
 ------------------------------------------------------------------------
@@ -108,7 +108,6 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
 | --patients_dir | Root directory of patient data |
 | --work_dir | Output workspace directory |
 | --controls_FA_to_T1_dir | Directory containing control group FA maps which registered to T1 images |
-| --target_fa | Sutdy-specific FA template from controls' FA maps |
 | --bedpostx_dir | BedpostX results directory |
 | --mean_fa | Sutdy-specific FA template from controls' FA maps |
 | --mat_dir | Directory containing ANTs transformation matrices |

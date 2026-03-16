@@ -26,7 +26,7 @@ def setup_directories(work_dir):
     return dirs
 
 
-def scan_patients(root_dir, t1_discon="T1_brain.nii.gz", t1_pwml="T1_for_dti.nii.gz", lesion="lesion_mask.nii.gz"):
+def scan_patients(root_dir, t1_discon="FA_to_T1.nii.gz", t1_pwml="FA_to_T1.nii.gz", lesion="lesion_mask.nii.gz"):
     patients = []
     if not os.path.isdir(root_dir):
         logger.error(f"患者目录不存在: {root_dir}")
@@ -66,11 +66,11 @@ def main():
     parser = argparse.ArgumentParser(description="Disconnection & PWML Pipeline CLI")
     parser.add_argument("--patients_dir", required=True, help="患者数据的根目录")
     parser.add_argument("--work_dir", required=True, help="输出的工作目录")
-    parser.add_argument("--controls_FA_dir", required=True, help="对照组T1图像目录")
+    parser.add_argument("--controls_FA_to_T1_dir", required=True, help="对照组TFA配准到T1图像目录")
     parser.add_argument("--bedpostx_dir", required=True, help="BedpostX 数据目录")
     parser.add_argument("--mean_fa", required=True, help="Mean FA 文件路径")
     parser.add_argument("--mat_dir", required=True, help="转换矩阵文件目录")
-    parser.add_argument("--thr_map", required=True, help="最终阈值图谱文件路径")
+    parser.add_argument("--thr_map", required=True, help="二值化失连接目标图文件路径")
     parser.add_argument("--jhu_atlas", required=True, help="JHU 概率图谱文件路径")
 
     parser.add_argument("--skip_discon", action="store_true", help="跳过 Disconnection 流程")
@@ -93,7 +93,6 @@ def main():
             'final_thr_map': args.thr_map,
         },
         'pwml_inputs': {
-            'target_fa_file': args.target_fa,
             'jhu_atlas_file': args.jhu_atlas
         }
     }

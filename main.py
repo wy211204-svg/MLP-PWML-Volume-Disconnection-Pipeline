@@ -10,7 +10,7 @@ def setup_directories(work_dir):
     dirs = {
         'work': work_dir,
         'reg_to_con': os.path.join(work_dir, 'discon_1_all_registered_masks'),
-        'reg_t1_to_con_qc': os.path.join(work_dir, 'discon_1a_registered_t1s_for_QC'),
+        'reg_to_con_qc': os.path.join(work_dir, 'discon_1a_registered_for_QC'),
         'probtrackx': os.path.join(work_dir, 'discon_2_all_probtrackx_outputs'),
         'fdt_paths': os.path.join(work_dir, 'discon_3_all_fdt_paths_binarized'),
         'reg_to_meanfa': os.path.join(work_dir, 'discon_4_all_registered_to_meanFA'),

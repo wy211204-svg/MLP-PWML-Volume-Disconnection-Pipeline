@@ -88,7 +88,7 @@ The patient dataset must follow the structure below:
 | File | Description |
 |-----|-------------|
 | FA_to_T1.nii.gz | FA registered to T1 images |
-| Lesion_mask.nii.gz | Lesion segementation form the T1 images |
+| Lesion_mask.nii.gz | Lesion segmentation form the T1 images |
 ------------------------------------------------------------------------
 
 # 4. Running the Pipeline

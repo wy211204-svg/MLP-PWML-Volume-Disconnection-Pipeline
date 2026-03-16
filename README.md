@@ -14,7 +14,6 @@ Before running this pipeline, ensure your system has the following installed:
 
 Clone this repository and install Python dependencies:
 
-```bash
 git clone https://github.com/YourUsername/NeuroPipeline.git
 cd NeuroPipeline
 pip install -r requirements.txt

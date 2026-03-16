@@ -110,8 +110,6 @@ def main():
     if discon_df is not None: final_df = pd.merge(final_df, discon_df, on="Patient ID", how="left")
     if pwml_df is not None: final_df = pd.merge(final_df, pwml_df, on="Patient ID", how="left")
 
-    if not args.skip_discon and not args.skip_pwml:
-        final_df = run_decision_tree(final_df)
 
     out_csv = os.path.join(dirs['work'], 'final_results.csv')
     final_df.to_csv(out_csv, index=False)

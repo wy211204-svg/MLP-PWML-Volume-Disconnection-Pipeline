@@ -19,6 +19,7 @@ cd pipeline
 pip install -r requirements.txt
 
 Data Structure (数据结构要求)
+
 Your patient data root directory must be organized as follows:
 
 patients_dir/

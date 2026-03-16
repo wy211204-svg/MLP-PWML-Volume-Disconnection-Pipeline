@@ -14,8 +14,8 @@ Before running this pipeline, ensure your system has the following installed:
 
 Clone this repository and install Python dependencies:
 
-git clone https://github.com/YourUsername/NeuroPipeline.git
-cd NeuroPipeline
+git clone https://github.com/wy211204-svg/pipeline.git
+cd pipeline
 pip install -r requirements.txt
 
 Data Structure (数据结构要求)
@@ -27,7 +27,8 @@ patients_dir/
 │   ├── T1_for_dti.nii.gz
 │   └── lesion_mask.nii.gz
 ├── patient_002/
-│   ├── T1_brain.nii.gz ...
+│   ├── T1_brain.nii.gz
+│   ├── ...
 
 ## Installation (安装指南)
 You can run the pipeline from the terminal by providing the necessary reference directories and paths:
@@ -45,6 +46,18 @@ python main.py \
 Optional Flags:
 --skip_discon: Skip the Disconnection pipeline.
 --skip_pwml: Skip the PWML pipeline.
+
+## Configuration (Configuration)
+--patients_dir	患者数据根目录
+--work_dir	输出工作目录
+--controls_t1_dir	对照组 T1 图像目录
+--target_fa	T1 配准目标 FA 文件路径
+--bedpostx_dir	BedpostX 结果数据目录
+--mean_fa	Mean FA 文件路径
+--mat_dir	ANTs 变换矩阵存储目录
+--thr_map	最终阈值图谱文件路径
+--jhu_atlas	JHU 概率图谱文件路径
+
 
 ## Installation (安装指南)
 The tool will create several subdirectories in your defined --work_dir. The final numerical results and the Decision Tree prediction will be exported as a CSV file:

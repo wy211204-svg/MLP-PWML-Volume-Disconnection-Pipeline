@@ -1,13 +1,14 @@
 # MLP-PWML-Volume-Disconnection-Pipeline
 
-A Python-based command line pipeline for **Structural Disconnection Mapping** and **Punctate White Matter Lesions** (PWML) analysis.
+A Python-based command line pipeline for **Punctate White Matter Lesions volume** (PWML)and **Structural Disconnection Mapping** analysis.
 
 This pipeline integrates widely used neuroimaging tools including
 **FSL**, **ANTs**, and **SimpleITK** to automate:
 
 -   Image registration
--   Structural disconnection analysis
--   Probabilistic tractography
+-   Fiber-Specific PWML Volume Quantification
+-   Structural disconnection Score analysis
+
 
 ------------------------------------------------------------------------
 
@@ -73,13 +74,11 @@ The patient dataset must follow the structure below:
 
     patients_dir/
     ├── patient_001/
-    │   ├── T1_brain.nii.gz
-    │   ├── T1_for_dti.nii.gz
+    │   ├── FA_to_T1.nii.gz
     │   └── lesion_mask.nii.gz
     │
     ├── patient_002/
-    │   ├── T1_brain.nii.gz
-    │   ├── T1_for_dti.nii.gz
+    │   ├── FA_to_T1.nii.gz
     │   └── lesion_mask.nii.gz
     │
     └── ...
@@ -88,9 +87,8 @@ The patient dataset must follow the structure below:
 
 | File | Description |
 |-----|-------------|
-| T1_brain.nii.gz | Skull-stripped T1 image |
-| T1_for_dti.nii.gz | T1 image used for DTI registration |
-| lesion_mask.nii.gz | Lesion mask aligned with the T1 image |
+| FA_to_T1.nii.gz | FA registered to T1 images |
+| Lesion_mask.nii.gz | Lesion segementation form the T1 images |
 ------------------------------------------------------------------------
 
 # 4. Running the Pipeline
@@ -109,12 +107,12 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
 |---------|-------------|
 | --patients_dir | Root directory of patient data |
 | --work_dir | Output workspace directory |
-| --controls_t1_dir | Directory containing control group T1 images |
-| --target_fa | Target FA template for registration |
+| --controls_FA_to_T1_dir | Directory containing control group FA maps which registered to T1 images |
+| --target_fa | Sutdy-specific FA template from controls' FA maps |
 | --bedpostx_dir | BedpostX results directory |
-| --mean_fa | Mean FA template |
+| --mean_fa | Sutdy-specific FA template from controls' FA maps |
 | --mat_dir | Directory containing ANTs transformation matrices |
-| --thr_map | Final threshold probability map |
+| --thr_map | Binary disconnection target map |
 | --jhu_atlas | JHU white matter atlas |
 
 ------------------------------------------------------------------------
@@ -123,8 +121,8 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
 
   Flag            Description
   --------------- ---------------------------------
-  --skip_discon   Skip the disconnection analysis
-  --skip_pwml     Skip the PWML analysis
+  --skip_pwml     Skip the PWML volume analysis
+  --skip_discon   Skip the disconnection mapping analysis
 
 Example:
 
@@ -145,8 +143,8 @@ The final results will be exported as:
 
 This file contains:
 
+-   PWML volume statistics
 -   Disconnection metrics
--   PWML statistics
 
 ------------------------------------------------------------------------
 

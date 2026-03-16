@@ -1,16 +1,13 @@
-# Neuro Pipeline: Disconnection & PWML CLI
+# MLP-PWML-Volume-Disconnection-Pipeline
 
-A Python-based command line pipeline for **structural disconnection
-analysis** and **Periventricular White Matter Lesion (PWML) analysis**.
+A Python-based command line pipeline for **Structural Disconnection Mapping** and **Punctate White Matter Lesions** (PWML) analysis.
 
 This pipeline integrates widely used neuroimaging tools including
 **FSL**, **ANTs**, and **SimpleITK** to automate:
 
 -   Image registration
--   Structural connectivity disconnection analysis
+-   Structural disconnection analysis
 -   Probabilistic tractography
--   Lesion cluster analysis
--   Clinical prognosis prediction using a built‑in decision tree model
 
 ------------------------------------------------------------------------
 
@@ -150,7 +147,6 @@ This file contains:
 
 -   Disconnection metrics
 -   PWML statistics
--   Decision tree prediction results
 
 ------------------------------------------------------------------------
 

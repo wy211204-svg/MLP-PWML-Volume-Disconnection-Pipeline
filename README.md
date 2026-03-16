@@ -87,14 +87,13 @@ The patient dataset must follow the structure below:
     │
     └── ...
 
-### File Description
+## 3. File Description
 
-  File                 Description
-  -------------------- ---------------------------------------
-  T1_brain.nii.gz      Skull‑stripped T1 image
-  T1_for_dti.nii.gz    T1 image used for DTI registration
-  lesion_mask.nii.gz   Lesion mask aligned with the T1 image
-
+| File | Description |
+|-----|-------------|
+| T1_brain.nii.gz | Skull-stripped T1 image |
+| T1_for_dti.nii.gz | T1 image used for DTI registration |
+| lesion_mask.nii.gz | Lesion mask aligned with the T1 image |
 ------------------------------------------------------------------------
 
 # 4. Running the Pipeline
@@ -107,19 +106,19 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
 
 ------------------------------------------------------------------------
 
-# 5. Arguments
+## 5. Arguments
 
-  Argument            Description
-  ------------------- ---------------------------------------------------
-  --patients_dir      Root directory of patient data
-  --work_dir          Output workspace directory
-  --controls_t1_dir   Directory containing control group T1 images
-  --target_fa         Target FA template for registration
-  --bedpostx_dir      BedpostX results directory
-  --mean_fa           Mean FA template
-  --mat_dir           Directory containing ANTs transformation matrices
-  --thr_map           Final threshold probability map
-  --jhu_atlas         JHU white matter atlas
+| Argument | Description |
+|---------|-------------|
+| --patients_dir | Root directory of patient data |
+| --work_dir | Output workspace directory |
+| --controls_t1_dir | Directory containing control group T1 images |
+| --target_fa | Target FA template for registration |
+| --bedpostx_dir | BedpostX results directory |
+| --mean_fa | Mean FA template |
+| --mat_dir | Directory containing ANTs transformation matrices |
+| --thr_map | Final threshold probability map |
+| --jhu_atlas | JHU white matter atlas |
 
 ------------------------------------------------------------------------
 

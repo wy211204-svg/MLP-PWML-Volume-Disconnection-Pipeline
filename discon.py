@@ -7,7 +7,6 @@ import SimpleITK as sitk
 from collections import defaultdict
 from utils import run_command_in_shell, get_fsl_volume, PipelineStepEmptyError, logger
 
-
 class DisconnectionPipeline:
     def __init__(self, config, dirs):
         self.config = config
@@ -33,19 +32,19 @@ class DisconnectionPipeline:
     def _step1_registration(self):
         logger.info("Disconnection-Step 1: 运行ANTS配准...")
         registered_lesion_info = []
-        controls_t1_dir = self.config['disconnection_inputs']['controls_t1_dir']
+        controls_fa_t1_dir = self.config['disconnection_inputs']['controls_t1_dir']
         control_files = sorted(
-            glob.glob(os.path.join(controls_t1_dir, '*.nii.gz')) + glob.glob(os.path.join(controls_t1_dir, '*.nii')))
+            glob.glob(os.path.join(controls_fa_t1_dir, '*.nii.gz')) + glob.glob(os.path.join(controls_fa_t1_dir, '*.nii')))
 
         for p_info in self.config['patients_to_process']:
-            patient_id, patient_t1_path, lesion_path = p_info['id'], p_info['t1_discon'], p_info['lesion']
+            patient_id, patient_fa_path, lesion_path = p_info['id'], p_info['fa'], p_info['lesion']
             logger.info(f"--- 开始处理患者 {patient_id} 的配准 ---")
 
-            patient_t1_ants = ants.image_read(patient_t1_path)
+            patient_fa_ants = ants.image_read(patient_fa_path)
             patient_lesion_ants = ants.image_read(lesion_path)
 
-            logger.info(f"    - 同步 {patient_id} 的 T1 和 Lesion Mask 的几何头文件信息...")
-            patient_lesion_ants = ants.copy_image_info(patient_t1_ants, patient_lesion_ants)
+            logger.info(f"    - 同步 {patient_id} 的 FA_to_T1 和 Lesion Mask 的几何头文件信息...")
+            patient_lesion_ants = ants.copy_image_info(patient_fa_ants, patient_lesion_ants)
 
             raw_mask_file = os.path.join(self.dirs['reg_to_con'], f"{patient_id}_lesion_raw.nii.gz")
             ants.image_write(patient_lesion_ants, raw_mask_file)
@@ -54,7 +53,9 @@ class DisconnectionPipeline:
                 con_id_with_prefix = os.path.basename(con_file).split('.')[0]
                 con_image_ants = ants.image_read(con_file)
 
-                registration = ants.registration(fixed=con_image_ants, moving=patient_t1_ants, type_of_transform="SyN")
+                # 使用 FA_to_T1 进行配准
+                registration = ants.registration(fixed=con_image_ants, moving=patient_fa_ants, type_of_transform="SyN")
+                
                 transformed_mask = ants.apply_transforms(fixed=con_image_ants, moving=patient_lesion_ants,
                                                          transformlist=registration['fwdtransforms'],
                                                          interpolator='nearestNeighbor')
@@ -62,12 +63,12 @@ class DisconnectionPipeline:
                                                 f"{patient_id}_lesion_to_{con_id_with_prefix}.nii.gz")
                 ants.image_write(transformed_mask, output_mask_file)
 
-                transformed_t1 = ants.apply_transforms(fixed=con_image_ants, moving=patient_t1_ants,
+                transformed_fa = ants.apply_transforms(fixed=con_image_ants, moving=patient_fa_ants,
                                                        transformlist=registration['fwdtransforms'],
                                                        interpolator='linear')
-                output_t1_file = os.path.join(self.dirs['reg_t1_to_con_qc'],
-                                              f"{patient_id}_t1_to_{con_id_with_prefix}.nii.gz")
-                ants.image_write(transformed_t1, output_t1_file)
+                output_fa_file = os.path.join(self.dirs['reg_t1_to_con_qc'],
+                                              f"{patient_id}_fa_to_{con_id_with_prefix}.nii.gz")
+                ants.image_write(transformed_fa, output_fa_file)
 
                 bedpostx_subject_id = con_id_with_prefix.split('_')[0]
                 registered_lesion_info.append(

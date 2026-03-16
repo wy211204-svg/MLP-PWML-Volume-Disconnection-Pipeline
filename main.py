@@ -107,8 +107,12 @@ def main():
 
     # 合并结果
     final_df = pd.DataFrame([p['id'] for p in patients], columns=["Patient ID"])
-    if discon_df is not None: final_df = pd.merge(final_df, discon_df, on="Patient ID", how="left")
-    if pwml_df is not None: final_df = pd.merge(final_df, pwml_df, on="Patient ID", how="left")
+    if discon_df is not None and not discon_df.empty:
+        cols_to_use = [c for c in discon_df.columns if c in ["Patient ID", "Discon. %", "Discon. Vol (vox)"]]
+        final_df = pd.merge(final_df, discon_df[cols_to_use], on="Patient ID", how="left")
+        
+    if pwml_df is not None and not pwml_df.empty:
+        final_df = pd.merge(final_df, pwml_df, on="Patient ID", how="left")
 
 
     out_csv = os.path.join(dirs['work'], 'final_results.csv')

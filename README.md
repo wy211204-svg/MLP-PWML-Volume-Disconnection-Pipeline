@@ -13,7 +13,6 @@ Before running this pipeline, ensure your system has the following installed:
 ## Installation (安装指南)
 
 Clone this repository and install Python dependencies:
-```bash
 # 1. 克隆代码库
 git clone https://github.com/wy211204-svg/pipeline.git
 cd pipeline
@@ -24,7 +23,6 @@ pip install -r requirements.txt
 Data Structure (数据结构要求)
 Your patient data root directory must be organized as follows:
 
-```text
 patients_dir/
 ├── patient_001/
 │   ├── T1_brain.nii.gz

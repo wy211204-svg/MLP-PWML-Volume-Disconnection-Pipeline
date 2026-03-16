@@ -22,14 +22,15 @@ Data Structure (数据结构要求)
 
 Your patient data root directory must be organized as follows:
 
+```text
 patients_dir/
 ├── patient_001/
 │   ├── T1_brain.nii.gz
 │   ├── T1_for_dti.nii.gz
 │   └── lesion_mask.nii.gz
-├── patient_002/
-│   ├── T1_brain.nii.gz
-│   ├── ...
+└── patient_002/
+    ├── T1_brain.nii.gz
+    └── ...
 
 ## Installation (安装指南)
 You can run the pipeline from the terminal by providing the necessary reference directories and paths:
@@ -48,7 +49,7 @@ Optional Flags:
 --skip_discon: Skip the Disconnection pipeline.
 --skip_pwml: Skip the PWML pipeline.
 
-## Configuration (Configuration)
+## Configuration (参数说明 )
 --patients_dir	患者数据根目录
 --work_dir	输出工作目录
 --controls_t1_dir	对照组 T1 图像目录

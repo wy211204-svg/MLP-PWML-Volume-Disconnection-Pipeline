@@ -20,8 +20,8 @@ class PWMLPipeline:
             native_space_atlas = self._step2_warp_atlas_to_t1(p_info, transform_paths)
             pwml_result = self._step3_calculate_overlap(p_info, native_space_atlas['bin'])
             msf_file_path = self._step4_run_cluster_analysis(p_info, native_space_atlas, self.dirs['pwml_cluster'])
-            decision_tree_results = self._step5_parse_cluster_results(p_info['id'], msf_file_path)
-            combined_result = {**pwml_result, **decision_tree_results}
+            fiber_volumes = self._step5_parse_cluster_results(p_info['id'], msf_file_path)
+            combined_result = {**pwml_result, **fiber_volumes}
             all_results.append(combined_result)
 
         if not all_results: raise PipelineStepEmptyError("PWML pipeline did not produce any results.")
@@ -142,5 +142,5 @@ class PWMLPipeline:
                         cols = line.split()
                         if len(cols) > 1: fiber_volumes[current_key] += int(cols[1])
 
-        factor = 0.8789
-        return {k: f"{(v * factor):.2f}" for k, v in fiber_volumes.items()}
+        conversion_factor = 0.8789
+        return {key: f"{(value * conversion_factor):.2f}" for key, value in fiber_volumes_vox.items()}

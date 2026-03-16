@@ -29,7 +29,7 @@ patients_dir/
 ├── patient_002/
 │   ├── T1_brain.nii.gz ...
 
-## Usage (使用说明)
+## Installation (安装指南)
 You can run the pipeline from the terminal by providing the necessary reference directories and paths:
 python main.py \
   --patients_dir /path/to/your/patients_data \
@@ -46,6 +46,6 @@ Optional Flags:
 --skip_discon: Skip the Disconnection pipeline.
 --skip_pwml: Skip the PWML pipeline.
 
-## Outputs (输出文件)
+## Installation (安装指南)
 The tool will create several subdirectories in your defined --work_dir. The final numerical results and the Decision Tree prediction will be exported as a CSV file:
 final_results.csv

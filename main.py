@@ -8,7 +8,7 @@ from pwml_pipeline import PWMLPipeline
 def scan_patients(patients_dir, logger):
     patients = []
     if not os.path.exists(patients_dir):
-        logger.error(f"找不到患者目录: {patients_dir}")
+        logger.error(f"Patient directory not found: {patients_dir}")
         return patients
         
     for p_id in sorted(os.listdir(patients_dir)):
@@ -19,9 +19,9 @@ def scan_patients(patients_dir, logger):
             if os.path.exists(fa_t1) and os.path.exists(lesion):
                 patients.append({'id': p_id, 'fa_t1': fa_t1, 'lesion': lesion})
             else:
-                logger.warning(f"跳过 {p_id}：未找到 FA_to_T1.nii.gz 或 lesion_mask.nii.gz")
+                logger.warning(f"Skipping {p_id}: FA_to_T1.nii.gz or lesion_mask.nii.gz not found")
     
-    logger.info(f"扫描完成，找到 {len(patients)} 位患者数据。")
+    logger.info(f"Scan complete. Found {len(patients)} patients with valid data.")
     return patients
 
 def main():
@@ -37,10 +37,10 @@ def main():
     args = parser.parse_args()
     logger = setup_logger(args.work_dir)
     
-    # 扫描患者
+    # Scan for patients
     patients = scan_patients(args.patients_dir, logger)
     if not patients:
-        logger.error("未找到有效的患者数据，程序退出。")
+        logger.error("No valid patient data found. Exiting program.")
         return
 
     config = vars(args)
@@ -48,26 +48,26 @@ def main():
 
     df_final = pd.DataFrame([p['id'] for p in patients], columns=["Patient ID"])
 
-    # 1. 运行 Disconnection Pipeline
+    # 1. Run Disconnection Pipeline
     try:
         discon = DisconnectionPipeline(config, logger)
         df_discon = discon.run()
         df_final = pd.merge(df_final, df_discon, on="Patient ID", how="left")
     except Exception as e:
-        logger.error(f"Disconnection 流程出错: {e}", exc_info=True)
+        logger.error(f"Error in Disconnection pipeline: {e}", exc_info=True)
 
-    # 2. 运行 PWML Pipeline
+    # 2. Run PWML Pipeline
     try:
         pwml = PWMLPipeline(config, logger)
         df_pwml = pwml.run()
         df_final = pd.merge(df_final, df_pwml, on="Patient ID", how="left")
     except Exception as e:
-        logger.error(f"PWML 流程出错: {e}", exc_info=True)
+        logger.error(f"Error in PWML pipeline: {e}", exc_info=True)
 
-    # 保存最终结果
+    # Save final results
     out_csv = os.path.join(args.work_dir, "final_results.csv")
     df_final.to_csv(out_csv, index=False)
-    logger.info(f"🎉 全部流程执行完毕！最终结果已保存至: {out_csv}")
+    logger.info(f"🎉 All pipelines completed successfully! Final results saved to: {out_csv}")
     print(df_final.to_string())
 
 if __name__ == "__main__":

@@ -82,10 +82,10 @@ class DisconnectionPipeline:
             run_command_in_shell(cmd, self.logger)
         return self.dirs['probtrackx']
 
-    def step3_5_stats_and_average(self, prob_dir):
+def step3_5_stats_and_average(self, prob_dir):
         self.logger.info("Discon-Step 3-5: Stats Thresholding, Transform & Patient Average...")
         
-        # --- Step 3: 对非零值求均值和标准差，保留区间内进行二值化 ---
+        # --- Step 3: 对非零值求均值和标准差，以均值加二倍标准差为阈值进行二值化 ---
         bin_files = []
         for pdir in glob.glob(os.path.join(prob_dir, '*_output')):
             fdt = os.path.join(pdir, 'fdt_paths.nii.gz')
@@ -105,12 +105,11 @@ class DisconnectionPipeline:
                 mean_val = np.mean(nonzero_data)
                 std_val = np.std(nonzero_data)
                 
-                # 双侧阈值界限
-                lower_bound = mean_val - 2 * std_val
-                upper_bound = mean_val + 2 * std_val
+                # 阈值：均值 + 2倍标准差
+                threshold = mean_val + 2 * std_val
                 
-                # 只保留大于0，且在 [lower, upper] 内的体素
-                bin_data = ((data > 0) & (data >= lower_bound) & (data <= upper_bound)).astype(np.uint8)
+                # 只保留大于等于该阈值的体素进行二值化
+                bin_data = (data >= threshold).astype(np.uint8)
                 bin_img = nib.Nifti1Image(bin_data, img.affine, img.header)
                 nib.save(bin_img, out_bin)
                 
@@ -167,14 +166,17 @@ class DisconnectionPipeline:
             
         return patient_avg_maps
 
-    def step6_group_calculate(self, patient_avg_maps, all_pids):
-        self.logger.info("Discon-Step 6: 分组计算最终阈值与得分...")
+def step6_group_calculate(self, patient_avg_maps, all_pids):
+        self.logger.info("Discon-Step 6: 分组计算最终得分...")
         
         # ==================== 分组逻辑 (伪代码区域) ====================
-        # 请根据您的临床表型实际文件修改此处逻辑。
-        # 假设这里单纯把列表平分以作演示，前一半预后好，后一半预后差
-        good_pids = all_pids[:max(1, len(all_pids)//2)]
-        bad_pids = all_pids[max(1, len(all_pids)//2):]
+        # 根据神经发育量表测评结果进行预后分组:
+        # unimpaired: 未受损组 (预后好)
+        # delay: 发育迟缓组 (预后差)
+        # 假设这里单纯把列表平分以作演示，请根据实际的临床CSV读取修改
+        half_idx = max(1, len(all_pids)//2)
+        unimpaired_pids = all_pids[:half_idx]
+        delay_pids = all_pids[half_idx:]
         # ===============================================================
         
         def calculate_group_average(pid_list):
@@ -192,23 +194,23 @@ class DisconnectionPipeline:
             return sum_data / count, ref_img
 
         # 1. 对两组分别求平均图
-        good_avg_data, ref_nii = calculate_group_average(good_pids)
-        bad_avg_data, _ = calculate_group_average(bad_pids)
+        unimpaired_avg_data, ref_nii = calculate_group_average(unimpaired_pids)
+        delay_avg_data, _ = calculate_group_average(delay_pids)
 
-        if good_avg_data is None or bad_avg_data is None:
+        if unimpaired_avg_data is None or delay_avg_data is None:
             self.logger.error("分组数据不足以生成阈值，将所有得分计为0。")
-            return pd.DataFrame([{"Patient ID": p, "Pat Bin Vol": 0, "Target Vol": 0, "Discon Score": "0.0000"} for p in all_pids])
+            return pd.DataFrame([{"Patient ID": p, "Pat Bin Vol (vox)": 0, "Target Vol (vox)": 0, "Discon Score": "0.0000"} for p in all_pids])
 
-        # 2. 以预后好组的最大值作为阈值
-        max_good_val = np.max(good_avg_data)
-        self.logger.info(f"提取预后好组的最大值作为阈值: {max_good_val:.6f}")
+        # 2. 以未受损组(unimpaired)的最大值作为提取靶点的阈值
+        max_unimpaired_val = np.max(unimpaired_avg_data)
+        self.logger.info(f"提取未受损组(unimpaired)的最大值作为靶点阈值: {max_unimpaired_val:.6f}")
 
-        # 3. 对预后差组进行二值化，作为最终 Target 图
-        bad_binarized_data = (bad_avg_data >= max_good_val).astype(np.uint8)
-        target_map_path = os.path.join(self.dirs['final_output'], "Target_BadGroup_Binarized.nii.gz")
-        nib.save(nib.Nifti1Image(bad_binarized_data, ref_nii.affine, ref_nii.header), target_map_path)
+        # 3. 对发育迟缓组(delay)进行二值化，作为最终的 Target 图
+        delay_binarized_data = (delay_avg_data >= max_unimpaired_val).astype(np.uint8)
+        target_map_path = os.path.join(self.dirs['final_output'], "Target_DelayGroup_Binarized.nii.gz")
+        nib.save(nib.Nifti1Image(delay_binarized_data, ref_nii.affine, ref_nii.header), target_map_path)
         
-        target_volume = np.sum(bad_binarized_data > 0)
+        target_volume = np.sum(delay_binarized_data > 0)
 
         # 4. 计算每个人的最终得分
         results = []

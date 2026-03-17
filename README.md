@@ -96,7 +96,7 @@ The patient dataset must follow the structure below:
 Run the pipeline from the terminal:
 
 ``` bash
-python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_workspace controls_FA_to_T1_dir /path/to/controls_FA_to_T1_images --bedpostx_dir /path/to/bedpostx_data --mean_fa /path/to/mean_FA.nii.gz --mat_dir /path/to/transforms_MAT --thr_map /path/to/thr_map.nii.gz --jhu_atlas /path/to/JHU_atlas.nii.gz
+python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_workspace controls_FA_to_T1_dir /path/to/controls_FA_to_T1_images --bedpostx_dir /path/to/bedpostx_data --mean_fa /path/to/mean_FA.nii.gz --mat_dir /path/to/transforms_MAT --jhu_atlas /path/to/JHU_atlas.nii.gz
 ```
 
 ------------------------------------------------------------------------
@@ -111,7 +111,6 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
 | --bedpostx_dir | BedpostX results directory |
 | --mean_fa | Sutdy-specific FA template from controls' FA maps |
 | --mat_dir | Directory containing ANTs transformation matrices |
-| --thr_map | Binary disconnection target map |
 | --jhu_atlas | JHU white matter atlas |
 
 ------------------------------------------------------------------------

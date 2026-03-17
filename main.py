@@ -32,7 +32,6 @@ def main():
     parser.add_argument('--bedpostx_dir', required=True, help="BedpostX results directory")
     parser.add_argument('--mean_fa', required=True, help="Study-specific FA template")
     parser.add_argument('--mat_dir', required=True, help="ANTs transformation matrices directory")
-    parser.add_argument('--thr_map', required=True, help="Binary disconnection target map")
     parser.add_argument('--jhu_atlas', required=True, help="JHU white matter atlas")
     
     args = parser.parse_args()

@@ -25,7 +25,7 @@ class DisconnectionPipeline:
         for d in self.dirs.values(): os.makedirs(d, exist_ok=True)
 
     def run(self):
-        self.logger.info("开始 Disconnection 分析...")
+        self.logger.info("Starting Disconnection analysis...")
         self.prepare_dirs()
         
         reg_lesions = self.step1_registration()
@@ -82,10 +82,10 @@ class DisconnectionPipeline:
             run_command_in_shell(cmd, self.logger)
         return self.dirs['probtrackx']
 
-def step3_5_stats_and_average(self, prob_dir):
+    def step3_5_stats_and_average(self, prob_dir):
         self.logger.info("Discon-Step 3-5: Stats Thresholding, Transform & Patient Average...")
         
-        # --- Step 3: 对非零值求均值和标准差，以均值加二倍标准差为阈值进行二值化 ---
+        # --- Step 3: Threshold based on mean + 2*std ---
         bin_files = []
         for pdir in glob.glob(os.path.join(prob_dir, '*_output')):
             fdt = os.path.join(pdir, 'fdt_paths.nii.gz')
@@ -97,25 +97,21 @@ def step3_5_stats_and_average(self, prob_dir):
                 img = nib.load(fdt)
                 data = img.get_fdata()
                 
-                # 提取非零值
                 nonzero_data = data[data > 0]
                 if len(nonzero_data) == 0:
                     continue
                 
                 mean_val = np.mean(nonzero_data)
                 std_val = np.std(nonzero_data)
-                
-                # 阈值：均值 + 2倍标准差
                 threshold = mean_val + 2 * std_val
                 
-                # 只保留大于等于该阈值的体素进行二值化
                 bin_data = (data >= threshold).astype(np.uint8)
                 bin_img = nib.Nifti1Image(bin_data, img.affine, img.header)
                 nib.save(bin_img, out_bin)
                 
                 bin_files.append({'p_id': p_id, 'path': out_bin})
 
-        # --- Step 4: SimpleITK 变换到 mean_fa ---
+        # --- Step 4: SimpleITK transform to mean_fa space ---
         reg_files = []
         ref_img = sitk.ReadImage(self.config['mean_fa'], sitk.sitkFloat32)
         for item in bin_files:
@@ -136,7 +132,7 @@ def step3_5_stats_and_average(self, prob_dir):
             sitk.WriteImage(resampled, out_reg)
             reg_files.append({'p_id': item['p_id'], 'path': out_reg})
 
-        # --- Step 5: 按患者相加求平均 ---
+        # --- Step 5: Average maps per patient ---
         patient_avg_maps = {}
         grouped = defaultdict(list)
         for it in reg_files: grouped[it['p_id']].append(it['path'])
@@ -166,18 +162,13 @@ def step3_5_stats_and_average(self, prob_dir):
             
         return patient_avg_maps
 
-def step6_group_calculate(self, patient_avg_maps, all_pids):
-        self.logger.info("Discon-Step 6: 分组计算最终得分...")
+    def step6_group_calculate(self, patient_avg_maps, all_pids):
+        self.logger.info("Discon-Step 6: Group-wise calculation of final scores...")
         
-        # ==================== 分组逻辑 (伪代码区域) ====================
-        # 根据神经发育量表测评结果进行预后分组:
-        # unimpaired: 未受损组 (预后好)
-        # delay: 发育迟缓组 (预后差)
-        # 假设这里单纯把列表平分以作演示，请根据实际的临床CSV读取修改
+        # Split patients into groups based on clinical scores
         half_idx = max(1, len(all_pids)//2)
         unimpaired_pids = all_pids[:half_idx]
         delay_pids = all_pids[half_idx:]
-        # ===============================================================
         
         def calculate_group_average(pid_list):
             sum_data, count, ref_img = None, 0, None
@@ -193,35 +184,28 @@ def step6_group_calculate(self, patient_avg_maps, all_pids):
             if count == 0: return None, None
             return sum_data / count, ref_img
 
-        # 1. 对两组分别求平均图
         unimpaired_avg_data, ref_nii = calculate_group_average(unimpaired_pids)
         delay_avg_data, _ = calculate_group_average(delay_pids)
 
         if unimpaired_avg_data is None or delay_avg_data is None:
-            self.logger.error("分组数据不足以生成阈值，将所有得分计为0。")
+            self.logger.error("Insufficient group data to generate threshold; setting scores to 0.")
             return pd.DataFrame([{"Patient ID": p, "Pat Bin Vol (vox)": 0, "Target Vol (vox)": 0, "Discon Score": "0.0000"} for p in all_pids])
 
-        # 2. 以未受损组(unimpaired)的最大值作为提取靶点的阈值
         max_unimpaired_val = np.max(unimpaired_avg_data)
-        self.logger.info(f"提取未受损组(unimpaired)的最大值作为靶点阈值: {max_unimpaired_val:.6f}")
+        self.logger.info(f"Using max value from unimpaired group as threshold: {max_unimpaired_val:.6f}")
 
-        # 3. 对发育迟缓组(delay)进行二值化，作为最终的 Target 图
         delay_binarized_data = (delay_avg_data >= max_unimpaired_val).astype(np.uint8)
         target_map_path = os.path.join(self.dirs['final_output'], "Target_DelayGroup_Binarized.nii.gz")
         nib.save(nib.Nifti1Image(delay_binarized_data, ref_nii.affine, ref_nii.header), target_map_path)
         
         target_volume = np.sum(delay_binarized_data > 0)
 
-        # 4. 计算每个人的最终得分
         results = []
         for p_id in all_pids:
             if p_id in patient_avg_maps and target_volume > 0:
                 pat_avg_data = nib.load(patient_avg_maps[p_id]).get_fdata()
-                
-                # 对个人的平均结果二值化 (值>0则记为1)
                 pat_binarized = (pat_avg_data > 0).astype(np.uint8)
                 pat_volume = np.sum(pat_binarized > 0)
-                
                 score = pat_volume / target_volume
                 
                 results.append({

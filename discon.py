@@ -1,11 +1,12 @@
 import os
 import glob
-import shutil
 import pandas as pd
+import numpy as np
+import nibabel as nib
 import ants
 import SimpleITK as sitk
 from collections import defaultdict
-from utils import run_command_in_shell, get_fsl_volume, PipelineStepEmptyError
+from utils import run_command_in_shell, get_fsl_volume
 
 class DisconnectionPipeline:
     def __init__(self, config, logger):
@@ -19,18 +20,20 @@ class DisconnectionPipeline:
         self.dirs['probtrackx'] = os.path.join(work_dir, 'discon_2_probtrackx')
         self.dirs['fdt_paths'] = os.path.join(work_dir, 'discon_3_fdt_bin')
         self.dirs['reg_to_meanfa'] = os.path.join(work_dir, 'discon_4_to_meanFA')
-        self.dirs['intersection'] = os.path.join(work_dir, 'discon_5_intersections')
+        self.dirs['patient_avg'] = os.path.join(work_dir, 'discon_5_patient_averages')
         self.dirs['final_output'] = os.path.join(work_dir, 'discon_6_final_outputs')
         for d in self.dirs.values(): os.makedirs(d, exist_ok=True)
 
     def run(self):
         self.logger.info("开始 Disconnection 分析...")
         self.prepare_dirs()
+        
         reg_lesions = self.step1_registration()
         prob_dir = self.step2_probtrackx(reg_lesions)
-        intersections = self.step3_5_intermediate(prob_dir)
+        patient_avg_maps = self.step3_5_stats_and_average(prob_dir)
+        
         patient_ids = [p['id'] for p in self.config['patients']]
-        df = self.step6_calculate(intersections, patient_ids)
+        df = self.step6_group_calculate(patient_avg_maps, patient_ids)
         return df
 
     def step1_registration(self):
@@ -49,7 +52,6 @@ class DisconnectionPipeline:
                 con_id = os.path.basename(con_file).split('.')[0]
                 con_fa_ants = ants.image_read(con_file)
 
-                # 使用 FA 配准 FA
                 reg = ants.registration(fixed=con_fa_ants, moving=pat_fa_ants, type_of_transform="SyN")
                 transformed_mask = ants.apply_transforms(
                     fixed=con_fa_ants, moving=pat_lesion_ants,
@@ -80,9 +82,10 @@ class DisconnectionPipeline:
             run_command_in_shell(cmd, self.logger)
         return self.dirs['probtrackx']
 
-    def step3_5_intermediate(self, prob_dir):
-        self.logger.info("Discon-Step 3-5: Binarize, Transform & Intersect...")
-        # 二值化
+    def step3_5_stats_and_average(self, prob_dir):
+        self.logger.info("Discon-Step 3-5: Stats Thresholding, Transform & Patient Average...")
+        
+        # --- Step 3: 对非零值求均值和标准差，保留区间内进行二值化 ---
         bin_files = []
         for pdir in glob.glob(os.path.join(prob_dir, '*_output')):
             fdt = os.path.join(pdir, 'fdt_paths.nii.gz')
@@ -90,10 +93,30 @@ class DisconnectionPipeline:
                 base = os.path.basename(pdir).replace('_output', '')
                 p_id = base.split('_lesion_to_')[0]
                 out_bin = os.path.join(self.dirs['fdt_paths'], f"{base}_bin.nii.gz")
-                run_command_in_shell(f"fslmaths '{fdt}' -bin '{out_bin}'", self.logger)
+                
+                img = nib.load(fdt)
+                data = img.get_fdata()
+                
+                # 提取非零值
+                nonzero_data = data[data > 0]
+                if len(nonzero_data) == 0:
+                    continue
+                
+                mean_val = np.mean(nonzero_data)
+                std_val = np.std(nonzero_data)
+                
+                # 双侧阈值界限
+                lower_bound = mean_val - 2 * std_val
+                upper_bound = mean_val + 2 * std_val
+                
+                # 只保留大于0，且在 [lower, upper] 内的体素
+                bin_data = ((data > 0) & (data >= lower_bound) & (data <= upper_bound)).astype(np.uint8)
+                bin_img = nib.Nifti1Image(bin_data, img.affine, img.header)
+                nib.save(bin_img, out_bin)
+                
                 bin_files.append({'p_id': p_id, 'path': out_bin})
 
-        # SimpleITK 变换到 mean_fa
+        # --- Step 4: SimpleITK 变换到 mean_fa ---
         reg_files = []
         ref_img = sitk.ReadImage(self.config['mean_fa'], sitk.sitkFloat32)
         for item in bin_files:
@@ -103,6 +126,7 @@ class DisconnectionPipeline:
             
             mov_img = sitk.ReadImage(item['path'], sitk.sitkUInt8)
             transform = sitk.ReadTransform(mat_file)
+            
             resampler = sitk.ResampleImageFilter()
             resampler.SetReferenceImage(ref_img)
             resampler.SetTransform(transform)
@@ -113,34 +137,103 @@ class DisconnectionPipeline:
             sitk.WriteImage(resampled, out_reg)
             reg_files.append({'p_id': item['p_id'], 'path': out_reg})
 
-        # 取交集
-        intersections = {}
+        # --- Step 5: 按患者相加求平均 ---
+        patient_avg_maps = {}
         grouped = defaultdict(list)
         for it in reg_files: grouped[it['p_id']].append(it['path'])
         
         for p_id, files in grouped.items():
             if not files: continue
-            out_intersect = os.path.join(self.dirs['intersection'], f"{p_id}_intersect.nii.gz")
-            shutil.copy(files[0], out_intersect)
-            for i in range(1, len(files)):
-                run_command_in_shell(f"fslmaths '{out_intersect}' -mul '{files[i]}' '{out_intersect}'", self.logger)
-            if get_fsl_volume(out_intersect, self.logger) > 0:
-                intersections[p_id] = out_intersect
-        return intersections
+            
+            sum_data = None
+            ref_nii = None
+            num_controls = len(files)
+            
+            for f in files:
+                img = nib.load(f)
+                data = img.get_fdata().astype(np.float32)
+                if sum_data is None:
+                    sum_data = data
+                    ref_nii = img
+                else:
+                    sum_data += data
+            
+            avg_data = sum_data / num_controls
+            avg_img = nib.Nifti1Image(avg_data, ref_nii.affine, ref_nii.header)
+            
+            out_avg = os.path.join(self.dirs['patient_avg'], f"{p_id}_avg.nii.gz")
+            nib.save(avg_img, out_avg)
+            patient_avg_maps[p_id] = out_avg
+            
+        return patient_avg_maps
 
-    def step6_calculate(self, intersections, all_pids):
-        self.logger.info("Discon-Step 6: 计算结果...")
-        thr_map = self.config['thr_map']
-        thr_vol = get_fsl_volume(thr_map, self.logger)
+    def step6_group_calculate(self, patient_avg_maps, all_pids):
+        self.logger.info("Discon-Step 6: 分组计算最终阈值与得分...")
+        
+        # ==================== 分组逻辑 (伪代码区域) ====================
+        # 请根据您的临床表型实际文件修改此处逻辑。
+        # 假设这里单纯把列表平分以作演示，前一半预后好，后一半预后差
+        good_pids = all_pids[:max(1, len(all_pids)//2)]
+        bad_pids = all_pids[max(1, len(all_pids)//2):]
+        # ===============================================================
+        
+        def calculate_group_average(pid_list):
+            sum_data, count, ref_img = None, 0, None
+            for p_id in pid_list:
+                if p_id in patient_avg_maps:
+                    img = nib.load(patient_avg_maps[p_id])
+                    if sum_data is None:
+                        sum_data = img.get_fdata().astype(np.float32)
+                        ref_img = img
+                    else:
+                        sum_data += img.get_fdata()
+                    count += 1
+            if count == 0: return None, None
+            return sum_data / count, ref_img
+
+        # 1. 对两组分别求平均图
+        good_avg_data, ref_nii = calculate_group_average(good_pids)
+        bad_avg_data, _ = calculate_group_average(bad_pids)
+
+        if good_avg_data is None or bad_avg_data is None:
+            self.logger.error("分组数据不足以生成阈值，将所有得分计为0。")
+            return pd.DataFrame([{"Patient ID": p, "Pat Bin Vol": 0, "Target Vol": 0, "Discon Score": "0.0000"} for p in all_pids])
+
+        # 2. 以预后好组的最大值作为阈值
+        max_good_val = np.max(good_avg_data)
+        self.logger.info(f"提取预后好组的最大值作为阈值: {max_good_val:.6f}")
+
+        # 3. 对预后差组进行二值化，作为最终 Target 图
+        bad_binarized_data = (bad_avg_data >= max_good_val).astype(np.uint8)
+        target_map_path = os.path.join(self.dirs['final_output'], "Target_BadGroup_Binarized.nii.gz")
+        nib.save(nib.Nifti1Image(bad_binarized_data, ref_nii.affine, ref_nii.header), target_map_path)
+        
+        target_volume = np.sum(bad_binarized_data > 0)
+
+        # 4. 计算每个人的最终得分
         results = []
-
         for p_id in all_pids:
-            if p_id in intersections:
-                final_overlap = os.path.join(self.dirs['final_output'], f"{p_id}_overlap.nii.gz")
-                run_command_in_shell(f"fslmaths '{intersections[p_id]}' -mul '{thr_map}' '{final_overlap}'", self.logger)
-                vol = get_fsl_volume(final_overlap, self.logger)
-                pct = (vol / thr_vol) * 100 if thr_vol > 0 else 0
-                results.append({"Patient ID": p_id, "Discon. Vol (vox)": vol, "Discon. %": f"{pct:.2f}"})
+            if p_id in patient_avg_maps and target_volume > 0:
+                pat_avg_data = nib.load(patient_avg_maps[p_id]).get_fdata()
+                
+                # 对个人的平均结果二值化 (值>0则记为1)
+                pat_binarized = (pat_avg_data > 0).astype(np.uint8)
+                pat_volume = np.sum(pat_binarized > 0)
+                
+                score = pat_volume / target_volume
+                
+                results.append({
+                    "Patient ID": p_id, 
+                    "Pat Bin Vol (vox)": pat_volume,
+                    "Target Vol (vox)": target_volume,
+                    "Discon Score": f"{score:.4f}"
+                })
             else:
-                results.append({"Patient ID": p_id, "Discon. Vol (vox)": 0, "Discon. %": "0.00"})
+                results.append({
+                    "Patient ID": p_id, 
+                    "Pat Bin Vol (vox)": 0,
+                    "Target Vol (vox)": target_volume,
+                    "Discon Score": "0.0000"
+                })
+
         return pd.DataFrame(results)

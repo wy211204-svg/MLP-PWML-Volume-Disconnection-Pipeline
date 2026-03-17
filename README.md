@@ -59,7 +59,7 @@ Clone this repository and install dependencies.
 
 ``` bash
 # Clone repository
-git clone https://github.com/wy211204-svg/pipeline.git
+git clone https://github.com/wy211204-svg/MLP-PWML-Volume-Disconnection-Pipeline.git
 cd pipeline
 
 # Install python dependencies

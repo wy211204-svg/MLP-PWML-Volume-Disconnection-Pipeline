@@ -20,7 +20,7 @@ class PWMLPipeline:
         for d in self.dirs.values(): os.makedirs(d, exist_ok=True)
 
     def run(self):
-        self.logger.info("开始 PWML 分析...")
+        self.logger.info("Starting PWML analysis...")
         self.prepare_dirs()
         results = []
         for p_info in self.config['patients']:
@@ -111,7 +111,7 @@ class PWMLPipeline:
         return msf
 
     def step5_parse(self, p_id, msf):
-        # 需求: PWML 的纤维束增加到4个 10,14,15,18，对应 left_IFOF, left_SLF, right_SLF, left_AF
+        # Requirement: Increase PWML fiber tracts to 4 (10, 14, 15, 18), corresponding to left_IFOF, left_SLF, right_SLF, left_AF
         targets = {
             'left_IFOF_vol_mm3': "vol_0010",
             'left_SLF_vol_mm3': "vol_0014",
@@ -132,5 +132,5 @@ class PWMLPipeline:
                         cols = line.split()
                         if len(cols) > 1: vols[curr_k] += int(cols[1])
                         
-        conv = 单个像素体积
+        conv = 1.0  # Replace 1.0 with the actual single voxel volume
         return {k: f"{(v * conv):.2f}" for k, v in vols.items()}

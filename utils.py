@@ -3,7 +3,7 @@ import subprocess
 import logging
 
 class PipelineStepEmptyError(Exception):
-    """当流程中的某个步骤未能产生任何有效输出时引发的自定义异常。"""
+    """Custom exception raised when a pipeline step fails to produce any valid output."""
     pass
 
 def setup_logger(work_dir):
@@ -42,5 +42,5 @@ def get_fsl_volume(nifti_file, logger):
         result = subprocess.check_output(cmd, text=True)
         return int(result.strip().split()[0])
     except (subprocess.CalledProcessError, IndexError, ValueError) as e:
-        logger.warning(f"警告: 无法获取 {nifti_file} 的体积: {e}")
+        logger.warning(f"Warning: Unable to get the volume of {nifti_file}: {e}")
         return 0

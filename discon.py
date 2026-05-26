@@ -39,7 +39,8 @@ class DisconnectionPipeline:
     def step1_registration(self):
         self.logger.info("Discon-Step 1: FA to Controls FA Registration...")
         registered_info = []
-        controls_dir = self.config['controls_FA_to_T1_dir']
+        # Name updated: controls_FA_to_T1_dir -> controls_T1_to_FA_dir
+        controls_dir = self.config['controls_T1_to_FA_dir']
         control_files = sorted(glob.glob(os.path.join(controls_dir, '*.nii.gz')))
 
         for p_info in self.config['patients']:
@@ -111,9 +112,10 @@ class DisconnectionPipeline:
                 
                 bin_files.append({'p_id': p_id, 'path': out_bin})
 
-        # --- Step 4: SimpleITK transform to mean_fa space ---
+        # --- Step 4: SimpleITK transform to JHU_T1 space ---
         reg_files = []
-        ref_img = sitk.ReadImage(self.config['mean_fa'], sitk.sitkFloat32)
+        # Name updated: mean_fa -> JHU_T1
+        ref_img = sitk.ReadImage(self.config['JHU_T1'], sitk.sitkFloat32)
         for item in bin_files:
             base = os.path.basename(item['path']).replace('_bin.nii.gz', '')
             con_id = base.split('_to_')[-1]
@@ -128,7 +130,8 @@ class DisconnectionPipeline:
             resampler.SetInterpolator(sitk.sitkNearestNeighbor)
             resampled = resampler.Execute(mov_img)
             
-            out_reg = os.path.join(self.dirs['reg_to_meanfa'], f"{base}_meanfa.nii.gz")
+            # Output name updated to reflect JHU_T1 space
+            out_reg = os.path.join(self.dirs['reg_to_meanfa'], f"{base}_JHU_T1.nii.gz")
             sitk.WriteImage(resampled, out_reg)
             reg_files.append({'p_id': item['p_id'], 'path': out_reg})
 

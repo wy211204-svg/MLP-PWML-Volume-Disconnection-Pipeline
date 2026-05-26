@@ -33,8 +33,8 @@ class PWMLPipeline:
         return pd.DataFrame(results)
 
     def step1_register(self, p_info):
-        p_id, p_fa = p_info['id'], p_info['fa_t1']
-        # Name updated: mean_fa -> JHU_T1
+        # Updated: Unpack 't1' instead of 'fa_t1'
+        p_id, p_t1 = p_info['id'], p_info['t1']
         mean_fa = self.config['JHU_T1']
         self.logger.info(f"PWML-Step 1: FA to JHU_T1 ({p_id})")
         
@@ -44,7 +44,8 @@ class PWMLPipeline:
         l6_out, l12_out, nonl_out = f"{base}_6dof.nii.gz", f"{base}_12dof.nii.gz", f"{base}_nonl.nii.gz"
         l6_mat, l12_mat, nonl_warp = f"{base}_6dof.mat", f"{base}_12dof.mat", f"{base}_nonl_warp.nii.gz"
         
-        run_command_in_shell(f"flirt -in '{p_fa}' -ref '{mean_fa}' -dof 6 -cost corratio -out '{l6_out}' -omat '{l6_mat}'", self.logger)
+        # Updated: Pass p_t1 instead of p_fa
+        run_command_in_shell(f"flirt -in '{p_t1}' -ref '{mean_fa}' -dof 6 -cost corratio -out '{l6_out}' -omat '{l6_mat}'", self.logger)
         run_command_in_shell(f"flirt -in '{l6_out}' -ref '{mean_fa}' -dof 12 -cost corratio -out '{l12_out}' -omat '{l12_mat}'", self.logger)
         run_command_in_shell(f"fnirt --in='{l12_out}' --ref='{mean_fa}' --cout='{nonl_warp}' --iout='{nonl_out}' --config=FA_2_FMRIB58_1mm", self.logger)
         
@@ -53,8 +54,8 @@ class PWMLPipeline:
         run_command_in_shell(f"convert_xfm -omat '{inv_l12}' -inverse '{l12_mat}'", self.logger)
         run_command_in_shell(f"invwarp --ref='{l12_out}' --warp='{nonl_warp}' --out='{inv_warp}'", self.logger)
         
-        return {'inv_l6': inv_l6, 'inv_l12': inv_l12, 'inv_warp': inv_warp, 'ref_fa': p_fa, 'ref_l6': l6_out, 'ref_l12': l12_out}
-
+        # Updated: Return 'ref_fa': p_t1
+        return {'inv_l6': inv_l6, 'inv_l12': inv_l12, 'inv_warp': inv_warp, 'ref_fa': p_t1, 'ref_l6': l6_out, 'ref_l12': l12_out}
     def step2_warp_atlas(self, p_info, trans):
         p_id = p_info['id']
         # Name updated: jhu_atlas -> JHU_atlas

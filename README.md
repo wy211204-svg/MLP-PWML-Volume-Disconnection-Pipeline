@@ -74,11 +74,11 @@ The patient dataset must follow the structure below:
 
     patients_dir/
     ├── patient_001/
-    │   ├── FA_to_T1.nii.gz
+    │   ├── T1.nii.gz
     │   └── lesion_mask.nii.gz
     │
     ├── patient_002/
-    │   ├── FA_to_T1.nii.gz
+    │   ├── T1.nii.gz
     │   └── lesion_mask.nii.gz
     │
     └── ...
@@ -87,7 +87,7 @@ The patient dataset must follow the structure below:
 
 | File | Description |
 |-----|-------------|
-| FA_to_T1.nii.gz | FA registered to T1 images |
+| T1.nii.gz | T1 images |
 | Lesion_mask.nii.gz | Lesion segmentation form the T1 images |
 ------------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ The patient dataset must follow the structure below:
 Run the pipeline from the terminal:
 
 ``` bash
-python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_workspace controls_FA_to_T1_dir /path/to/controls_FA_to_T1_images --bedpostx_dir /path/to/bedpostx_data --mean_fa /path/to/mean_FA.nii.gz --mat_dir /path/to/transforms_MAT --jhu_atlas /path/to/JHU_atlas.nii.gz
+python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_workspace controls_T1_to_FA_dir /path/to/controls_T1_to_FA_images --bedpostx_dir /path/to/bedpostx_data --JHU_T1 /path/to/JHU_T1.nii.gz --mat_dir /path/to/transforms_MAT --JHU_atlas /path/to/JHU_atlas.nii.gz
 ```
 
 ------------------------------------------------------------------------
@@ -107,11 +107,11 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
 |---------|-------------|
 | --patients_dir | Root directory of patient data |
 | --work_dir | Output workspace directory |
-| --controls_FA_to_T1_dir | Directory containing control group FA maps which registered to T1 images |
+| --controls_T1_to_FA_dir | Directory containing control group T1 maps which registered to FA images |
 | --bedpostx_dir | BedpostX results directory |
-| --mean_fa | Sutdy-specific FA template from controls' FA maps |
+| --JHU_T1 | Sutdy-specific FA template from JHU T1 template |
 | --mat_dir | Directory containing ANTs transformation matrices |
-| --jhu_atlas | JHU white matter atlas |
+| --JHU_atlas | JHU white matter atlas |
 
 ------------------------------------------------------------------------
 

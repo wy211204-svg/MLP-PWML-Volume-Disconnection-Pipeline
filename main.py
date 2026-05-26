@@ -28,11 +28,14 @@ def main():
     parser = argparse.ArgumentParser(description="Disconnection & PWML CLI Pipeline")
     parser.add_argument('--patients_dir', required=True, help="Root directory of patient data")
     parser.add_argument('--work_dir', required=True, help="Output workspace directory")
-    parser.add_argument('--controls_FA_to_T1_dir', required=True, help="Controls FA to T1 directory")
+    # Updated to match --controls_T1_to_FA_dir
+    parser.add_argument('--controls_T1_to_FA_dir', required=True, help="Directory containing control group T1 maps which registered to FA images")
     parser.add_argument('--bedpostx_dir', required=True, help="BedpostX results directory")
-    parser.add_argument('--mean_fa', required=True, help="Study-specific FA template")
-    parser.add_argument('--mat_dir', required=True, help="ANTs transformation matrices directory")
-    parser.add_argument('--jhu_atlas', required=True, help="JHU white matter atlas")
+    # Updated to match --JHU_T1
+    parser.add_argument('--JHU_T1', required=True, help="Study-specific FA template from JHU T1 template")
+    parser.add_argument('--mat_dir', required=True, help="Directory containing ANTs transformation matrices")
+    # Updated to match --JHU_atlas
+    parser.add_argument('--JHU_atlas', required=True, help="JHU white matter atlas")
     
     args = parser.parse_args()
     logger = setup_logger(args.work_dir)
@@ -67,7 +70,7 @@ def main():
     # Save final results
     out_csv = os.path.join(args.work_dir, "final_results.csv")
     df_final.to_csv(out_csv, index=False)
-    logger.info(f"🎉 All pipelines completed successfully! Final results saved to: {out_csv}")
+    logger.info(f"All pipelines completed successfully! Final results saved to: {out_csv}")
     print(df_final.to_string())
 
 if __name__ == "__main__":

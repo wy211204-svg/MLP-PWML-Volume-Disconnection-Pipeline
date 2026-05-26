@@ -34,8 +34,9 @@ class PWMLPipeline:
 
     def step1_register(self, p_info):
         p_id, p_fa = p_info['id'], p_info['fa_t1']
-        mean_fa = self.config['mean_fa']
-        self.logger.info(f"PWML-Step 1: FA to Mean_FA ({p_id})")
+        # Name updated: mean_fa -> JHU_T1
+        mean_fa = self.config['JHU_T1']
+        self.logger.info(f"PWML-Step 1: FA to JHU_T1 ({p_id})")
         
         reg_dir = os.path.join(self.dirs['reg'], p_id)
         os.makedirs(reg_dir, exist_ok=True)
@@ -56,7 +57,8 @@ class PWMLPipeline:
 
     def step2_warp_atlas(self, p_info, trans):
         p_id = p_info['id']
-        jhu = self.config['jhu_atlas']
+        # Name updated: jhu_atlas -> JHU_atlas
+        jhu = self.config['JHU_atlas']
         warp_dir = os.path.join(self.dirs['warp'], p_id)
         os.makedirs(warp_dir, exist_ok=True)
         tmp = os.path.join(warp_dir, "tmp")

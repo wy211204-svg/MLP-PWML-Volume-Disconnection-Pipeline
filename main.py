@@ -14,12 +14,14 @@ def scan_patients(patients_dir, logger):
     for p_id in sorted(os.listdir(patients_dir)):
         p_path = os.path.join(patients_dir, p_id)
         if os.path.isdir(p_path):
-            fa_t1 = os.path.join(p_path, "FA_to_T1.nii.gz")
+            # Updated file name to T1.nii.gz
+            t1 = os.path.join(p_path, "T1.nii.gz")
             lesion = os.path.join(p_path, "lesion_mask.nii.gz")
-            if os.path.exists(fa_t1) and os.path.exists(lesion):
-                patients.append({'id': p_id, 'fa_t1': fa_t1, 'lesion': lesion})
+            if os.path.exists(t1) and os.path.exists(lesion):
+                # Updated key name from 'fa_t1' to 't1'
+                patients.append({'id': p_id, 't1': t1, 'lesion': lesion})
             else:
-                logger.warning(f"Skipping {p_id}: FA_to_T1.nii.gz or lesion_mask.nii.gz not found")
+                logger.warning(f"Skipping {p_id}: T1.nii.gz or lesion_mask.nii.gz not found")
     
     logger.info(f"Scan complete. Found {len(patients)} patients with valid data.")
     return patients

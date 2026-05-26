@@ -1,6 +1,6 @@
 # MLP-PWML-Volume-Disconnection-Pipeline
 
-A Python-based command line pipeline for **Punctate White Matter Lesions volume** (PWML)and **Structural Disconnection Mapping** analysis.
+A Python-based command line pipeline for **Punctate White Matter Lesions (PWML)volume** and **Structural Disconnection Mapping** analysis.
 
 This pipeline integrates widely used neuroimaging tools including
 **FSL**, **ANTs**, and **SimpleITK** to automate:
@@ -107,9 +107,9 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
 |---------|-------------|
 | --patients_dir | Root directory of patient data |
 | --work_dir | Output workspace directory |
-| --controls_T1_to_FA_dir | Directory containing control group T1 maps which registered to FA images |
+| --controls_T1_to_FA_dir | Directory containing control group T1 images which registered to FA maps |
 | --bedpostx_dir | BedpostX results directory |
-| --JHU_T1 | Sutdy-specific FA template from JHU T1 template |
+| --JHU_T1 | JHU T1 template |
 | --mat_dir | Directory containing ANTs transformation matrices |
 | --JHU_atlas | JHU white matter atlas |
 
@@ -120,7 +120,7 @@ python main.py --patients_dir /path/to/patients_data --work_dir /path/to/output_
   Flag            Description
   --------------- ---------------------------------
   --skip_pwml     Skip the PWML volume analysis
-  --skip_discon   Skip the disconnection mapping analysis
+  --skip_discon   Skip the structural disconnection mapping analysis
 
 Example:
 
@@ -141,8 +141,8 @@ The final results will be exported as:
 
 This file contains:
 
--   PWML volume statistics
--   Disconnection metrics
+-   Fiber-specific PWML volume statistics
+-   structural disconnection score
 
 ------------------------------------------------------------------------
 

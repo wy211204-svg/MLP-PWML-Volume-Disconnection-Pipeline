@@ -39,13 +39,12 @@ class DisconnectionPipeline:
     def step1_registration(self):
         self.logger.info("Discon-Step 1: FA to Controls FA Registration...")
         registered_info = []
-        # Name updated: controls_FA_to_T1_dir -> controls_T1_to_FA_dir
         controls_dir = self.config['controls_T1_to_FA_dir']
         control_files = sorted(glob.glob(os.path.join(controls_dir, '*.nii.gz')))
 
         for p_info in self.config['patients']:
-            p_id, p_fa, p_lesion = p_info['id'], p_info['fa_t1'], p_info['lesion']
-            pat_fa_ants = ants.image_read(p_fa)
+            p_id, p_t1, p_lesion = p_info['id'], p_info['t1'], p_info['lesion']
+            pat_fa_ants = ants.image_read(p_t1)
             pat_lesion_ants = ants.image_read(p_lesion)
             pat_lesion_ants = ants.copy_image_info(pat_fa_ants, pat_lesion_ants)
 

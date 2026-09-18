@@ -112,7 +112,7 @@ python main.py \
 
 ---
 
-# 6. Clinical Group Analysis and Discon Score
+# 6. Clinical Group Analysis and Disconnection Score Calculation
 
 The clinical grouping CSV should contain patient IDs and real clinical group labels, for example:
 

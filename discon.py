@@ -24,12 +24,12 @@ class DisconnectionPipeline:
             and generate a binary disconnectome map.
     Step 5: Average all binary control-derived maps for each patient to create a
             patient-level disconnectome probability/consistency map (0-1).
-    Step 6: If real clinical grouping data are supplied, construct a delay-group
-            target and calculate each patient's Discon Score as:
+    Step 6: Use real clinical grouping data to construct a delay-group target
+            and calculate each patient's Discon Score as:
 
                 overlap(patient_disconnectome_binary, target) / target_volume
 
-            If clinical grouping data are not supplied, Step 6 is skipped.
+            Step 6 is required to obtain the final Discon Score.
     """
 
     def __init__(self, config, logger):
@@ -72,7 +72,7 @@ class DisconnectionPipeline:
         binary_files = self.step4_threshold_in_jhu(jhu_fdt_files)
         patient_avg_maps = self.step5_patient_average(binary_files)
 
-        # Base output is always available after Step 5.
+        # Step 5 provides the patient-level disconnectome maps used by Step 6.
         all_patient_ids = [p["id"] for p in self.config["patients"]]
         result_rows = []
         for patient_id in all_patient_ids:
@@ -84,12 +84,14 @@ class DisconnectionPipeline:
             )
         df_results = pd.DataFrame(result_rows)
 
-        # Step 6 only runs when REAL clinical grouping data are provided.
+        # Step 6 is required for the final Discon Score.
         df_step6 = self.step6_group_calculate(patient_avg_maps)
-        if df_step6 is not None and not df_step6.empty:
-            df_results = pd.merge(
-                df_results, df_step6, on="Patient ID", how="left"
-            )
+        if df_step6 is None or df_step6.empty:
+            raise RuntimeError("Step 6 did not produce Discon Scores.")
+
+        df_results = pd.merge(
+            df_results, df_step6, on="Patient ID", how="left"
+        )
 
         return df_results
 
@@ -449,12 +451,12 @@ class DisconnectionPipeline:
         return patient_avg_maps
 
     def step6_group_calculate(self, patient_avg_maps):
-        """Future clinical group analysis and Discon Score calculation.
+        """Clinical group analysis and Discon Score calculation.
 
-        Step 6 is skipped unless --clinical_groups_csv is supplied.
+        Step 6 is required and uses --clinical_groups_csv.
 
-        Required future clinical CSV
-        ----------------------------
+        Required clinical CSV
+        ---------------------
         At minimum, the CSV must contain a patient-ID column and a group column.
         Defaults are:
 
@@ -512,11 +514,10 @@ class DisconnectionPipeline:
         )
 
         if not clinical_csv:
-            self.logger.info(
-                "No clinical grouping CSV supplied. Step 6 calculation is defined "
-                "but is skipped for the current dataset."
+            raise ValueError(
+                "Step 6 requires --clinical_groups_csv to calculate the final "
+                "Discon Score."
             )
-            return None
 
         if not os.path.exists(clinical_csv):
             raise FileNotFoundError(

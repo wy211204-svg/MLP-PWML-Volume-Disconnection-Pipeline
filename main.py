@@ -83,13 +83,13 @@ def build_parser():
         ),
     )
 
-    # Optional Step-6 clinical grouping interface.
+    # Step-6 clinical grouping information is required to calculate the final Discon Score.
     parser.add_argument(
         "--clinical_groups_csv",
-        default=None,
+        required=True,
         help=(
-            "Optional CSV containing real clinical group assignments. "
-            "If omitted, Step 6 is skipped."
+            "CSV containing real clinical group assignments required for "
+            "Step 6 Discon Score calculation"
         ),
     )
     parser.add_argument(

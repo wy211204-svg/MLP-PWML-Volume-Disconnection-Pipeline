@@ -6,7 +6,7 @@ This pipeline integrates widely used neuroimaging tools including FSL, ANTs, and
 
 * Image registration
 * Structural disconnection mapping
-* Structural disconnection score analysis when real clinical grouping data are available
+* Structural disconnection score calculation
 
 ---
 
@@ -46,8 +46,8 @@ Clone this repository and install dependencies.
 
 ```bash
 # Clone repository
-git clone https://github.com/wy211204-svg/MLP-PWML-Volume-Disconnection-Pipeline.git
-cd MLP-PWML-Volume-Disconnection-Pipeline
+git clone https://github.com/wy211204-svg/Structural-Disconnection-Pipeline.git
+cd Structural-Disconnection-Pipeline
 
 # Install python dependencies
 pip install -r requirements.txt
@@ -92,7 +92,8 @@ python main.py \
   --controls_T1_to_FA_dir /path/to/controls_T1_to_FA_images \
   --bedpostx_dir /path/to/bedpostx_data \
   --JHU_T1 /path/to/JHU_T1.nii.gz \
-  --mat_dir /path/to/transforms_MAT
+  --mat_dir /path/to/transforms_MAT \
+  --clinical_groups_csv /path/to/clinical_groups.csv
 ```
 
 ---
@@ -107,18 +108,13 @@ python main.py \
 | --bedpostx_dir | BedpostX results directory |
 | --JHU_T1 | JHU T1 template |
 | --mat_dir | Directory containing control-to-JHU transformation matrices |
+| --clinical_groups_csv | CSV containing the real clinical grouping information used in Step 6 |
 
 ---
 
-# 6. Optional Clinical Group Analysis
+# 6. Clinical Group Analysis and Discon Score
 
-If real clinical grouping data are available, provide:
-
-```bash
---clinical_groups_csv /path/to/clinical_groups.csv
-```
-
-The CSV should contain patient IDs and real clinical group labels, for example:
+The clinical grouping CSV should contain patient IDs and real clinical group labels, for example:
 
 ```text
 patient_id,group
@@ -126,9 +122,7 @@ patient_001,unimpaired
 patient_002,delay
 ```
 
-If no clinical grouping file is provided, Step 6 is skipped.
-
-When grouping data are available, the unimpaired and delay group-average disconnectome maps are calculated. The maximum value of the unimpaired group-average map is used to threshold the delay group-average map and generate the target map.
+Step 6 calculates the unimpaired and delay group-average disconnectome maps. The maximum value of the unimpaired group-average map is used to threshold the delay group-average map and generate the target map.
 
 For each patient:
 
@@ -151,7 +145,7 @@ final_results.csv
 This file contains:
 
 * Patient-level disconnectome map
-* Structural disconnection score when real clinical grouping data are provided
+* Structural disconnection score
 
 ---
 

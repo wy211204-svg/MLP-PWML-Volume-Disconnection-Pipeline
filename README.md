@@ -1,4 +1,4 @@
-# Structural-Disconnection-Pipeline
+# Structural-Disconnection-Score-Pipeline
 
 A Python-based command line pipeline for Structural Disconnection Mapping analysis.
 
@@ -46,8 +46,8 @@ Clone this repository and install dependencies.
 
 ```bash
 # Clone repository
-git clone https://github.com/wy211204-svg/Structural-Disconnection-Pipeline.git
-cd Structural-Disconnection-Pipeline
+git clone https://github.com/wy211204-svg/Structural-Disconnection-Score-Pipeline.git
+cd Structural-Disconnection-Score-Pipeline
 
 # Install python dependencies
 pip install -r requirements.txt
@@ -122,12 +122,12 @@ patient_001,unimpaired
 patient_002,delay
 ```
 
-Step 6 calculates the unimpaired and delay group-average disconnectome maps. The maximum value of the unimpaired group-average map is used to threshold the delay group-average map and generate the target map.
+Step 6 calculates the unimpaired and delay group-average probabilistic disconnection maps. The threshold was set to the maximum value of the unimpaired group-average map plus 0.01 and was applied to the delay group-average map to generate the disconnection target map.
 
 For each patient:
 
 ```text
-Discon Score = overlap between patient disconnectome and target / target volume
+Structural Disconnection Score = overlap between patient binary disconnection map and binary target map/ binary disconnection target map
 ```
 
 ---
@@ -139,12 +139,12 @@ The pipeline automatically creates subdirectories inside the specified `--work_d
 The final results will be exported as:
 
 ```text
-final_results.csv
+disconnection_score.csv
 ```
 
 This file contains:
 
-* Patient-level disconnectome map
+* Patient_id
 * Structural disconnection score
 
 ---

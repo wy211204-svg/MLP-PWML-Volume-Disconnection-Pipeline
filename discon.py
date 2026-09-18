@@ -619,6 +619,8 @@ class DisconnectionPipeline:
         )
 
         max_unimpaired_val = float(np.max(unimpaired_avg_data))
+
+        target_threshold = max_unimpaired_val + 0.01
         if max_unimpaired_val <= 0:
             raise ValueError(
                 "The maximum value of the unimpaired group-average map is <= 0; "
